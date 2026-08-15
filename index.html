@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monite API Manager</title>
+    <style>
+        body { background: #111; color: #fff; font-family: monospace; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #333; padding: 10px; text-align: left; }
+        th { background: #222; }
+        input { background: #222; color: #0f0; border: 1px solid #333; padding: 8px; width: 100%; }
+        button { background: #0f0; color: #000; border: none; padding: 10px 20px; cursor: pointer; }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Monite Offset Manager</h1>
+    <p>Version: <span id="version">...</span></p>
+    
+    <table id="offsetTable">
+        <tr><th>Offset Name</th><th>Value</th></tr>
+    </table>
+    
+    <br>
+    <button onclick="saveOffsets()">💾 Save Offsets</button>
+    <span id="status"></span>
+
+    <script>
+        const API_URL = './api/offsets.json';
+        
+        async function loadOffsets() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            document.getElementById('version').textContent = data.version;
+            
+            const table = document.getElementById('offsetTable');
+            for (const [name, value] of Object.entries(data.offsets)) {
+                const row = table.insertRow();
+                row.innerHTML = `
+                    <td>${name}</td>
+                    <td><input type="text" value="${value}" data-name="${name}"></td>
+                `;
+            }
+        }
+        
+        function saveOffsets() {
+            const inputs = document.querySelectorAll('input[data-name]');
+            const offsets = {};
+            inputs.forEach(input => {
+                offsets[input.dataset.name] = input.value;
+            });
+            
+            const data = {
+                version: document.getElementById('version').textContent,
+                offsets: offsets
+            };
+            
+            // Download JSON file
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'offsets.json';
+            a.click();
+            
+            document.getElementById('status').innerHTML = '<span class="success">✅ Saved! Upload to server.</span>';
+        }
+        
+        loadOffsets();
+    </script>
+</body>
+</html>
